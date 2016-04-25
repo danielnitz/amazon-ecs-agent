@@ -201,8 +201,8 @@ func (task *Task) dockerConfig(container *Container) (*docker.Config, *DockerCli
 	for envKey, envVal := range container.Environment {
         if strings.HasPrefix(metaDataPrefix, envVal) {
             metaDataEntity := strings.Replace(envVal, metaDataPrefix, "", -1)
-            envByte, _ := ec2.ReadResource(metaDataEntity)
-            envVal = string(envByte)
+            iid, _ := ec2.GetInstanceIdentityDocument()
+            envVal = iid.PrivateIp
         }
 		dockerEnv = append(dockerEnv, envKey+"="+envVal)
 	}
