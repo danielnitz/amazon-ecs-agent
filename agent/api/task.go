@@ -22,11 +22,13 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/acs/model/ecsacs"
 	"github.com/aws/amazon-ecs-agent/agent/engine/emptyvolume"
 	"github.com/aws/amazon-ecs-agent/agent/utils/ttime"
+	"github.com/aws/amazon-ecs-agent/agent/ec2"
 	"github.com/aws/aws-sdk-go/private/protocol/json/jsonutil"
 	"github.com/fsouza/go-dockerclient"
 )
 
 const emptyHostVolumeName = "~internal~ecs-emptyvolume-source"
+const metaDataPrefix = "METADATA_"
 
 // PostUnmarshalTask is run after a task has been unmarshalled, but before it has been
 // run. It is possible it will be subsequently called after that and should be
@@ -197,6 +199,11 @@ func (task *Task) dockerConfig(container *Container) (*docker.Config, *DockerCli
 
 	dockerEnv := make([]string, 0, len(container.Environment))
 	for envKey, envVal := range container.Environment {
+        if strings.HasPrefix(metaDataPrefix, envVal) {
+            metaDataEntity := strings.Replace(envVal, metaDataPrefix, "", -1)
+            envByte, _ := ec2.ReadResource(metaDataEntity)
+            envVal = string(envByte)
+        }
 		dockerEnv = append(dockerEnv, envKey+"="+envVal)
 	}
 
